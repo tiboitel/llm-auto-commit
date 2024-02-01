@@ -2,98 +2,58 @@
 #include <string.h>
 #include <curl/curl.h>
 #include <json-c/json.h>
+#include "http_request.h"
+#include "json_parser.h"
+
+#define LLM_API_URL "http://127.0.0.1:5000/v1/chat/completions"
 
 // Global variable to store content
-char *extractedContent = NULL;
+char    *extractedContent = NULL;
 
 // Callback function to write received data
 size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp) {
     size_t realsize = size * nmemb;
-    char *data = (char *)contents;
 
     (void)userp;
 
-    // Parse JSON data
-    json_object *jobj = json_tokener_parse(data);
-    if (jobj == NULL) {
-        fprintf(stderr, "Error parsing JSON\n");
-        return realsize;
-    }
+    parse_and_extract_content(contents, &extractedContent);
+    printf("git commit -m \"%s\"\n", extractedContent);
 
-    // Extract "content" field
-    json_object *contentObj;
-    if (json_object_object_get_ex(jobj, "choices", &contentObj)) {
-        json_object *messageObj = json_object_array_get_idx(contentObj, 0);
-        if (messageObj != NULL) {
-            json_object *content;
-            if (json_object_object_get_ex(messageObj, "message", &content)) {
-                json_object *contentContent;
-                if (json_object_object_get_ex(content, "content",
-                            &contentContent)) {
-                    const char *contentStr = 
-                        json_object_get_string(contentContent);
-                    printf("%s\n", contentStr);
-                }
-            }
-        }
-    }
-
-    json_object_put(jobj);
     return realsize;
 }
 
 
 void usage() {
+    printf("Usage: llm-auto-commit [OPTION]... [MESSAGE]\n\
+            Transforms MESSAGE into a formatted commit message.\n");
 }
 
 int main(int argc, char **argv) {
-    CURL *curl;
-    CURLcode res;
-
-    // Temporary void arguments for -Wunused
-    (void)argc;
     (void)argv;
-    usage();
 
-    // Initialize libcurl
-    curl_global_init(CURL_GLOBAL_DEFAULT);
-
-    // Create a curl handle
-    curl = curl_easy_init();
-    if (curl) {
-        // Set the URL
-        curl_easy_setopt(curl, CURLOPT_URL,
-                "http://127.0.0.1:5000/v1/chat/completions");
-
-        // Set the content type
-        struct curl_slist *headers = NULL;
-        headers = curl_slist_append(headers, "Content-Type: application/json");
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-
-        // Set the POST data
-        const char *postData = "{\"messages\":[{\"role\":\"user\",\"content\":\"Write a commit message. Write only the commit message. Be simple and straightforward. Use following format feat:($branch_name) $message:\\n\\n1\\nbranch_name: features/MOB-42.\\nmessage: Write JSX main.\"}],\"mode\":\"instruct\",\"instruction_template\":\"Alpaca\",\"max_tokens\":50}";
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postData);
-
-        // Set the write callback function
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-
-        // Perform the request
-        res = curl_easy_perform(curl);
-
-        // Check for errors
-        if (res != CURLE_OK) {
-            fprintf(stderr, "curl_easy_perform() failed: %s\n",
-                    curl_easy_strerror(res));
-        }
-
-        // Cleanup
-        curl_easy_cleanup(curl);
-        curl_slist_free_all(headers);
+    if (argc <= 1)
+    {
+        usage();
+        return (EXIT_SUCCESS);
     }
 
-    // Cleanup libcurl
-    curl_global_cleanup();
+    char *promptTemplate = 
+        "{\"messages\": [" 
+        "{\"role\": \"user\","
+        "\"content\": \"Rewrite message: %s as a commit message following the format below. Never use quote or backquote. Use tense in the subject and imperative mood. Keep the message concise. Write only the commit message. Format:\\nfeat($scope): $message.\\n\"}" 
+        "],"
+        "\"mode\": \"instruct\","
+        "\"instruction_template\": \"Alpaca\","
+        "\"max_tokens\": 25}";
+    size_t  promptSize = snprintf(NULL, 0, promptTemplate, argv[1]) + 1;
+    char    *prompt = (char *)malloc(sizeof(char) * promptSize);
 
-    return 0;
+    // Format prompt. 
+    snprintf(prompt, promptSize, promptTemplate, argv[1]);
+
+    // Send request to LLM API.
+    send_http_request(LLM_API_URL, prompt, &WriteCallback);
+
+    return EXIT_SUCCESS;
 }
 

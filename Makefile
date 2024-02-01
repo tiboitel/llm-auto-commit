@@ -1,36 +1,37 @@
 NAME = llm-auto-commit
-SRCS = \
-	main.c
+SRCS = main.c \
+	   http_request.c \
+	   json_parser.c
 SRCSPATH = src/
-INCLUDES = includes
+INCLUDES = include
 BUILDDIR = build/
-BUILD = $(addprefix $(BUILDDIR), $(NAME))
+BUILD = $(BUILDDIR)$(NAME)
 
 CC = gcc
-CGLAGS  = \
+CFLAGS = \
 	  -Wall \
 	  -Werror \
 	  -Wextra
 
-INCLUDES_C = -lcurl -ljson-c
-INCLUDES_O = -I $(INCLUDES)
-
+LIBS = -lcurl -ljson-c
+INCLUDES_O = -I$(INCLUDES)
 
 SRC = $(addprefix $(SRCSPATH), $(SRCS))
-OBJS = $(SRC:.c=.o)
+OBJS = $(addprefix $(BUILDDIR), $(SRCS:.c=.o))
 
-all:	$(BUILD)
+all: $(BUILD)
 
-$(BUILD):	$(OBJS)
-	$(CC) -o $(BUILD) $(OBJS) $(CFLAGS) $(INCLUDES_C)
+$(BUILD): $(OBJS)
+	$(CC) -o $(BUILD) $(OBJS) $(CFLAGS) $(LIBS)
 
-%.o: $.c
+$(BUILDDIR)%.o: $(SRCSPATH)%.c
 	$(CC) -o $@ $(CFLAGS) $(INCLUDES_O) -c $<
 
 clean:
-	rm -rf $(OBJS)
+	rm -rf $(BUILDDIR)*.o
 
-fclean:	clean
-	rm -rf $(BUILD)
+fclean: clean
+	rm -f $(BUILD)
 
-re:	fclean	all
+re: fclean all
+
