@@ -19,6 +19,8 @@ INCLUDES_O = -I$(INCLUDES)
 SRC = $(addprefix $(SRCSPATH), $(SRCS))
 OBJS = $(addprefix $(BUILDDIR), $(SRCS:.c=.o))
 
+$(shell mkdir -p $(BUILDDIR))
+
 all: $(BUILD)
 
 $(BUILD): $(OBJS)
@@ -31,7 +33,7 @@ clean:
 	rm -rf $(BUILDDIR)*.o
 
 fclean: clean
-	rm -f $(BUILD)
+	rm -rf $(BUILD)
 
 re: fclean all
 
