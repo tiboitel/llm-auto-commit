@@ -9,9 +9,9 @@ Automate your commit messages effortlessly with llm-auto-commit. This project ut
 ## Features
 
 ⚡️ Minimal setup \
-⚡️ LLM API integration \
+⚡️ LLM API integration
 
-# Exemple
+## Exemple
 
 Example of use:
 
