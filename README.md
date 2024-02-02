@@ -11,6 +11,16 @@ Automate your commit messages effortlessly with llm-auto-commit. This project ut
 ⚡️ Minimal setup \
 ⚡️ LLM API integration \
 
+# Exemple
+
+Example of use:
+
+```bash
+./llm-auto-commit "documentation lolf my chat popup ok"
+git commit -m "docs(chat): update chat popup documentation"
+```
+
+
 ---
 
 ## Getting Started 🚀
@@ -38,6 +48,8 @@ To install dependencies on Arch:
 ```bash
 sudo pacman -Syu --noconfirm && sudo pacman -S --noconfirm curl json-c gcc
 ```
+
+In case you are using Windows, well, I can only advice you to reconsider your lifestyle. I use Arch btw.
 
 ### How To Use 🔧
 
