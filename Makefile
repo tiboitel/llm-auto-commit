@@ -1,6 +1,6 @@
 NAME = llm-auto-commit
 SRCS = main.c \
-	   http_request.c \
+	   api_request.c \
 	   json_parser.c
 SRCSPATH = src/
 INCLUDES = include

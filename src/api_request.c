@@ -1,11 +1,16 @@
-#include "http_request.h"
+#include "api_request.h"
 
-CURLcode    send_http_request(const char *url, const char *postData,
+CURLcode    send_api_request(const char *url, const char *postData,
         size_t (*writeCallback)(void *, size_t, size_t, void *))
 {
     CURL *curl;
     CURLcode res;
 
+    if (url == NULL || postData == NULL || writeCallback == NULL) {
+        fprintf(stderr, "Error: Invalid arguments at send_http_request() \
+                function call.\n");
+        return CURLE_BAD_FUNCTION_ARGUMENT;
+    }
     // Initialize libcurl
     curl_global_init(CURL_GLOBAL_DEFAULT);
 
@@ -30,7 +35,7 @@ CURLcode    send_http_request(const char *url, const char *postData,
 
         // Check for errors
         if (res != CURLE_OK) {
-            fprintf(stderr, "curl_easy_perform() failed: %s\n",
+            fprintf(stderr, "curl_easy_perform() failed URL %s: %s\n", url,
                     curl_easy_strerror(res));
             return res;
         }
